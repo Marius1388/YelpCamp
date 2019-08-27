@@ -18,9 +18,18 @@ var commentRoutes    = require("./routes/comments"),
     campgroundRoutes = require("./routes/campgrounds"),
     indexRoutes      = require("./routes/index")
     
-mongoose.connect("mongodb://localhost:27017/yelp_camp_v13",{useNewUrlParser: true});
-mongoose.set('useCreateIndex', true);
-mongoose.set('useFindAndModify', false);
+    //for local development use ne next line
+    //mongoose.connect("mongodb://localhost:27017/yelp_camp_v13",{
+//for production app, use next line
+mongoose.connect(process.env.DATABASEURL, {
+   useNewUrlParser: true,
+   useCreateIndex: true,
+   useFindAndModify: false
+}).then(()=> {
+   console.log("connected to Db!!!");
+}).catch(err => {
+   console.log("ERROR", err.message);
+});
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
