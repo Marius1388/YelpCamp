@@ -19,7 +19,7 @@ var commentRoutes    = require("./routes/comments"),
     indexRoutes      = require("./routes/index")
     
     //for local development use ne next line
-//mongoose.connect("mongodb://localhost:27017/yelp_camp_v13",{
+//mongoose.connect("mongodb://localhost:27017/yelp_camp_v15",{
 //for production app, use next line
 mongoose.connect(process.env.DATABASEURL, {
    useNewUrlParser: true,
