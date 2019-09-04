@@ -16,7 +16,7 @@ var express     = require("express"),
 //requring routes
 var commentRoutes    = require("./routes/comments"),
     campgroundRoutes = require("./routes/campgrounds"),
-    indexRoutes      = require("./routes/index")
+    indexRoutes      = require("./routes/index");
     
     //for local development use ne next line
 //mongoose.connect("mongodb://localhost:27017/yelp_camp_v15",{
