@@ -64,43 +64,48 @@ router.get("/", function(req, res){
 });
 
 //CREATE - add new campground to DB
-router.post("/", middleware.isLoggedIn, upload.single('image'), function(req, res) {   
-     // get data from form and add to campgrounds array
-    var name = req.body.name;
-    var image = req.body.image;
-    var desc = req.body.description;
-    var price = req.body.price;
-    var author = {
+router.post("/", middleware.isLoggedIn, upload.single('image'), function(req, res){
+  // get data from form and add to campgrounds array
+  geocoder.geocode(req.body.location, function (err, data) {
+    if (err || !data.length) {
+      req.flash('error', 'Invalid address');
+      console.log(err);
+      return res.redirect('back');
+    }
+    var lat = data[0].latitude;
+    var lng = data[0].longitude;
+    var location = data[0].formattedAddress;
+    // Create a new campground and save to DB
+    cloudinary.v2.uploader.upload(req.file.path, function(err, result) {
+      if(err) {
+        req.flash('error', err.message);
+        return res.redirect('back');
+      }
+      // add cloudinary url for the image to the campground object under image property
+      req.body.campground.image = result.secure_url;
+      // add image's public_id to campground object
+      req.body.campground.imageId = result.public_id;
+      // add author to campground
+      req.body.campground.author = {
         id: req.user._id,
         username: req.user.username
-    }
-    geocoder.geocode(req.body.location, function (err, data) {
-        
-      cloudinary.v2.uploader.upload(req.file.path, function(err, result) {
-        if(err) {
+      }
+        req.body.campground.price = req.body.campground.price;
+        //campground.price = req.body.campground.price;
+        //console.log("the given price is"+req.body.campground.price);
+        req.body.campground.lat = data[0].latitude;
+        req.body.campground.lng = data[0].longitude;
+        req.body.campground.location = data[0].formattedAddress;
+      Campground.create(req.body.campground, function(err, campground) {
+        if (err) {
           req.flash('error', err.message);
           return res.redirect('back');
         }
-        // add cloudinary url for the image to the campground object under image property
-        req.body.campground.image = result.secure_url;
-        // add image's public_id to campground object
-        req.body.campground.imageId = result.public_id;
-        // add author to campground
-        req.body.campground.author = {
-          id: req.user._id,
-          username: req.user.username
-        }
-        Campground.create(req.body.campground, function(err, campground) {
-          if (err) {
-            req.flash('error', err.message);
-            return res.redirect('back');
-          }
-          res.redirect('/campgrounds/' + campground.id);
-        });
+        res.redirect('/campgrounds/' + campground.id);
       });
-
     });
   });
+});
   
 //NEW - show form to create new campground
 router.get("/new", middleware.isLoggedIn, function(req, res){
@@ -135,9 +140,9 @@ router.put("/:id", middleware.checkUserCampground, upload.single("image"), funct
         req.flash('error', 'Invalid address');
         return res.redirect('back');
       }
-      req.body.campground.lat = data[0].latitude;
-      req.body.campground.lng = data[0].longitude;
-      req.body.campground.location = data[0].formattedAddress;
+      req.body.lat = data[0].latitude;
+      req.body.lng = data[0].longitude;
+      req.body.location = data[0].formattedAddress;
   
       Campground.findById(req.params.id, async function(err, campground){
         if(err){
@@ -155,8 +160,12 @@ router.put("/:id", middleware.checkUserCampground, upload.single("image"), funct
                   return res.redirect("back");
               }
             }
-            campground.name = req.body.name;
-            campground.description = req.body.description;
+            campground.name = req.body.campground.name;
+            campground.description = req.body.campground.description;
+            campground.price = req.body.campground.price;
+            campground.lat = data[0].latitude;
+            campground.lng = data[0].longitude;
+            campground.location = data[0].formattedAddress;
             campground.save();
             req.flash("success","Successfully Updated!");
             res.redirect("/campgrounds/" + campground._id);
